@@ -26,3 +26,4 @@
 	| summarize count() by UserPrincipalName | sort by count_ desc 
 	| summarize  by UserPrincipalName
 	|summarize mycount=count (UserPrincipalName) 
+SS
