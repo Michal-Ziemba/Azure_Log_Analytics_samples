@@ -1,0 +1,21 @@
+	SigninLogs 
+	| project ConditionalAccessPolicies, UserPrincipalName, AppDisplayName, DeviceDetail 
+	| where ConditionalAccessPolicies != "[]"
+	| where "All users" == "All users" or UserPrincipalName has "All users"
+	| where "All apps" == "All apps" or AppDisplayName has "All apps"
+	| mv-expand ConditionalAccessPolicies
+	| where ConditionalAccessPolicies["id"] == "bc1203f6-3e63-4584-9f3e-9e2a6bbe0aac"
+	    | extend result = ConditionalAccessPolicies["result"]
+	    | project-away ConditionalAccessPolicies
+		| extend resultName = case(result == "success" or result == "reportOnlySuccess", "Success", result == "failure" or result == "reportOnlyFailure", "Failure", result == "interrupt" or result == "reportOnlyInterrupted", "User action required", "Not applied")
+	    | extend statusCode = case(resultName == "Success", 2, resultName == "Failure", 3, resultName == "User action required", 4, 5)
+	    | where statusCode == 4 
+	//
+	// non compliant or not managed devices
+	// |where isempty(DeviceDetail ["isCompliant"]) or isempty( DeviceDetail ["isManaged"])
+	//
+	// noncompliant and not managed devices
+	|where isempty(DeviceDetail ["isCompliant"]) and  isempty( DeviceDetail ["isManaged"])
+	//
+	//if you want to summarizy by application calls
+	// | summarize count() by AppDisplayName | sort by count_ desc 
